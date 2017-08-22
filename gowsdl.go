@@ -67,6 +67,10 @@ func downloadFile(url string, ignoreTLS bool) ([]byte, error) {
 	}
 
 	defer resp.Body.Close()
+	if resp.StatusCode != 200 {
+		return nil, fmt.Errorf("Received response code %d", resp.StatusCode)
+	}
+
 	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
@@ -185,7 +189,8 @@ func (g *GoWSDL) unmarshal() error {
 }
 
 func (g *GoWSDL) resolveXSDExternals(schema *XSDSchema, u *url.URL) error {
-	download := func(u1 *url.URL, loc string) error{
+	download := func(u1 *url.URL, loc string) error {
+		// fmt.Println("u1 is", u1)
 		location, err := u1.Parse(loc)
 		if err != nil {
 			return err
@@ -206,6 +211,10 @@ func (g *GoWSDL) resolveXSDExternals(schema *XSDSchema, u *url.URL) error {
 		log.Println("Downloading external schema", "location", schemaLocation)
 
 		data, err := downloadFile(schemaLocation, g.ignoreTLS)
+		if err != nil {
+			return err
+		}
+
 		newschema := new(XSDSchema)
 
 		err = xml.Unmarshal(data, newschema)
@@ -213,13 +222,14 @@ func (g *GoWSDL) resolveXSDExternals(schema *XSDSchema, u *url.URL) error {
 			return err
 		}
 
-		if len(newschema.Includes) > 0 &&
-			maxRecursion > g.currentRecursionLevel {
-
+		if len(newschema.Includes) > 0 {
 			g.currentRecursionLevel++
 
-			//log.Printf("Entering recursion %d\n", g.currentRecursionLevel)
-			g.resolveXSDExternals(newschema, u1)
+			// log.Printf("Entering recursion %d\n", g.currentRecursionLevel)
+			err = g.resolveXSDExternals(newschema, u1)
+			if err != nil {
+				return err
+			}
 		}
 
 		g.wsdl.Types.Schemas = append(g.wsdl.Types.Schemas, newschema)
@@ -232,15 +242,14 @@ func (g *GoWSDL) resolveXSDExternals(schema *XSDSchema, u *url.URL) error {
 		return nil
 	}
 
-
 	for _, impts := range schema.Imports {
-		if e := download(u, impts.SchemaLocation); e!= nil {
+		if e := download(u, impts.SchemaLocation); e != nil {
 			return e
 		}
 	}
 
 	for _, incl := range schema.Includes {
-		if e := download(u, incl.SchemaLocation); e!= nil {
+		if e := download(u, schema.TargetNamespace+"/"+incl.SchemaLocation); e != nil {
 			return e
 		}
 	}
@@ -429,7 +438,8 @@ func toGoType(xsdType string) string {
 		return value
 	}
 
-	return "*" + replaceReservedWords(makePublic(t))
+	tname := "*" + replaceReservedWords(makePublic(t))
+	return tname
 }
 
 // Given a message, finds its type.

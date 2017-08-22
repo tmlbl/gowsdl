@@ -29,8 +29,9 @@ var typesTmpl = `
 
 {{define "Attributes"}}
 	{{range .}}
-		{{if .Doc}} {{.Doc | comment}} {{end}} {{if not .Type}}
-			{{ .Name | makeFieldPublic}} {{toGoType .SimpleType.Restriction.Base}} ` + "`" + `xml:"{{.Name}},attr,omitempty"` + "`" + `
+		{{if .Doc}} {{.Doc | comment}} {{end}}
+		{{if not .Type}}
+			{{ .Name | makeFieldPublic}} {{toGoType .Restriction.Base}} ` + "`" + `xml:"{{.Name}},attr,omitempty"` + "`" + `
 		{{else}}
 			{{ .Name | makeFieldPublic}} {{toGoType .Type}} ` + "`" + `xml:"{{.Name}},attr,omitempty"` + "`" + `
 		{{end}}
