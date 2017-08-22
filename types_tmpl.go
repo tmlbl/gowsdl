@@ -7,7 +7,7 @@ package gowsdl
 var typesTmpl = `
 {{define "SimpleType"}}
 	{{$type := replaceReservedWords .Name | makePublic}}
-	type {{$type}} {{toGoType .Restriction.Base}}
+	type {{$type}} {{goSimpleType .}}
 	const (
 		{{with .Restriction}}
 			{{range .Enumeration}}
@@ -29,8 +29,9 @@ var typesTmpl = `
 
 {{define "Attributes"}}
 	{{range .}}
-		{{if .Doc}} {{.Doc | comment}} {{end}} {{if not .Type}}
-			{{ .Name | makeFieldPublic}} {{toGoType .SimpleType.Restriction.Base}} ` + "`" + `xml:"{{.Name}},attr,omitempty"` + "`" + `
+		{{if .Doc}} {{.Doc | comment}} {{end}}
+		{{if not .Type}}
+			{{ .Name | makeFieldPublic}} {{goSimpleType .SimpleType}} ` + "`" + `xml:"{{.Name}},attr,omitempty"` + "`" + `
 		{{else}}
 			{{ .Name | makeFieldPublic}} {{toGoType .Type}} ` + "`" + `xml:"{{.Name}},attr,omitempty"` + "`" + `
 		{{end}}

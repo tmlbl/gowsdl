@@ -105,3 +105,32 @@ func TestEnumerationsGeneratedCorrectly(t *testing.T) {
 	enumStringTest(t, "vboxweb.wsdl", "SettingsVersionV1_14", "SettingsVersion", "v1_14")
 
 }
+
+func TestSimpleTypeList(t *testing.T) {
+	g := GoWSDL{
+		file:         "fixtures/list.xsd",
+		pkg:          "myservice",
+		makePublicFn: makePublic,
+	}
+
+	_, err := g.Start()
+	if err != nil {
+		t.Error(err)
+	}
+
+	for _, sch := range g.wsdl.Types.Schemas {
+		for _, st := range sch.SimpleType {
+			if st.List == nil {
+				t.Errorf("Nil list for SimpleType")
+			}
+			if goSimpleType(st) != `[]int32` {
+				t.Errorf("SimpleType list was not rendered correctly")
+			}
+		}
+	}
+
+	_, err = g.genTypes()
+	if err != nil {
+		t.Error(err)
+	}
+}

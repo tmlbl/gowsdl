@@ -260,6 +260,7 @@ func (g *GoWSDL) resolveXSDExternals(schema *XSDSchema, u *url.URL) error {
 func (g *GoWSDL) genTypes() ([]byte, error) {
 	funcMap := template.FuncMap{
 		"toGoType":             toGoType,
+		"goSimpleType":         goSimpleType,
 		"stripns":              stripns,
 		"replaceReservedWords": replaceReservedWords,
 		"makePublic":           g.makePublicFn,
@@ -419,6 +420,19 @@ func removeNS(xsdType string) string {
 		return r[1]
 	} else {
 		return r[0]
+	}
+}
+
+func goSimpleType(s *XSDSimpleType) string {
+	if s == nil {
+		panic("Received a nil *SimpleType")
+	}
+	if s.Restriction.Base != "" {
+		return toGoType(s.Restriction.Base)
+	} else if s.List != nil {
+		return `[]` + toGoType(s.List.ItemType)
+	} else {
+		panic("Received an empty *SimpleType")
 	}
 }
 

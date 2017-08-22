@@ -106,11 +106,16 @@ type XSDAttribute struct {
 	SimpleType *XSDSimpleType `xml:"simpleType"`
 }
 
+type XSDList struct {
+	ItemType string `xml:"itemType,attr"`
+}
+
 // XSDSimpleType element defines a simple type and specifies the constraints
 // and information about the values of attributes or text-only elements.
 type XSDSimpleType struct {
 	Name        string         `xml:"name,attr"`
 	Restriction XSDRestriction `xml:"restriction"`
+	List        *XSDList       `xml:"list"`
 }
 
 // XSDRestriction defines restrictions on a simpleType, simpleContent, or complexContent definition.
